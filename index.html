@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Website Fetch and Embed</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 0;
+            margin: 0;
+            background-color: #2e2e2e;
+            color: #ffffff;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+        #sidebar {
+            position: fixed;
+            right: -300px;
+            top: 0;
+            bottom: 0;
+            width: 300px;
+            background-color: #1e1e1e;
+            overflow-y: auto;
+            transition: right 0.3s ease;
+            z-index: 1000;
+        }
+        #toggle-button {
+            position: fixed;
+            right: 0;
+            top: 50%;
+            width: 20px;
+            height: 100px;
+            background-color: #333333;
+            color: #ffffff;
+            border: none;
+            cursor: pointer;
+            z-index: 1001;
+            transform: translateY(-50%);
+        }
+        #console {
+            padding: 10px;
+            background-color: #1e1e1e;
+            height: 200px;
+            overflow-y: auto;
+            margin-bottom: 10px;
+        }
+        .command { color: #00ff00; }
+        .output { color: #ffffff; }
+        .error { color: #ff0000; }
+        #input, #website-input {
+            width: calc(100% - 20px);
+            padding: 10px;
+            margin: 10px;
+            background-color: #333333;
+            color: #ffffff;
+            border: none;
+        }
+        button {
+            padding: 10px;
+            background-color: #00ff00;
+            color: #000;
+            border: none;
+            cursor: pointer;
+            margin: 10px;
+        }
+        #output-container {
+            flex-grow: 1;
+            padding: 20px;
+            background-color: #fff;
+            color: #000;
+            position: relative;
+        }
+        iframe {
+            width: 100%;
+            height: 100vh;
+            background-color: #fff;
+            display: none;
+        }
+        #next-screen-button {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 10px;
+            background-color: #007BFF;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+            z-index: 1002;
+        }
+        #elements {
+            padding: 10px;
+            margin: 10px;
+            background-color: #333333;
+            height: 150px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <button id="toggle-button">☰</button>
+    <div id="sidebar">
+        <input type="text" id="website-input" placeholder="Enter website URL (e.g., https://example.com)">
+        <button id="fetch-website">Fetch Website</button>
+        <button id="load-iframe">Load in Iframe</button>
+        <button id="embed-website">Embed in New Tab</button>
+        <div id="console"></div>
+        <input type="text" id="input" placeholder="Enter JavaScript code here...">
+        <h3>Elements</h3>
+        <div id="elements"></div>
+    </div>
+    <div id="output-container">
+        <div id="output"></div>
+        <iframe id="website-iframe" src="about:blank"></iframe>
+    </div>
+    <button id="next-screen-button">Go to Google Doc</button>
+
+    <script>
+        const input = document.getElementById('input');
+        const consoleDiv = document.getElementById('console');
+        const outputDiv = document.getElementById('output');
+        const websiteInput = document.getElementById('website-input');
+        const fetchWebsiteButton = document.getElementById('fetch-website');
+        const loadIframeButton = document.getElementById('load-iframe');
+        const embedButton = document.getElementById('embed-website');
+        const sidebar = document.getElementById('sidebar');
+        const toggleButton = document.getElementById('toggle-button');
+        const iframe = document.getElementById('website-iframe');
+        const nextScreenButton = document.getElementById('next-screen-button');
+        const elementsDiv = document.getElementById('elements');
+
+        let executedCode = new Set(); // Store executed JS code to prevent duplicates
+
+        toggleButton.addEventListener('click', function() {
+            sidebar.style.right = sidebar.style.right === '0px' ? '-300px' : '0px';
+        });
+
+        fetchWebsiteButton.addEventListener('click', async function() {
+            const url = websiteInput.value;
+            try {
+                const response = await fetch(url);
+                if (!response.ok) throw new Error('Network response was not ok');
+                const html = await response.text();
+                outputDiv.innerHTML = html; // Display fetched HTML
+                logOutput('Fetched content successfully.');
+                elementsDiv.textContent = html; // Display HTML in Elements section
+            } catch (error) {
+                logOutput(error.message, true);
+            }
+        });
+
+        loadIframeButton.addEventListener('click', function() {
+            const url = websiteInput.value;
+            iframe.src = url; // Load the URL in the iframe
+            iframe.style.display = 'block'; // Show the iframe
+            outputDiv.innerHTML = ''; // Clear output
+            logOutput('Loading website in iframe...');
+            elementsDiv.textContent = ''; // Clear elements section
+        });
+
+        embedButton.addEventListener('click', function() {
+            const url = websiteInput.value;
+            const newWindow = window.open();
+            newWindow.document.body.style.margin = '0';
+            newWindow.document.body.style.height = '100vh';
+
+            const newIframe = newWindow.document.createElement('iframe');
+            newIframe.style.border = 'none';
+            newIframe.style.width = '100%';
+            newIframe.style.height = '100%';
+            newIframe.src = url;
+
+            newWindow.document.body.appendChild(newIframe);
+            logOutput('Embedding website in new tab...');
+        });
+
+        nextScreenButton.addEventListener('click', function() {
+            outputDiv.innerHTML = ''; // Clear output
+            iframe.src = "https://docs.google.com/document/d/17ac7vGx49IOY23yPEccJA7uxSk-byvI2OkpiPHxeMjs/edit"; // Embed Google Doc
+            iframe.style.display = 'block'; // Show the iframe
+            logOutput('Loading Google Doc...');
+            elementsDiv.textContent = ''; // Clear elements section
+        });
+
+        input.addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                const jsCode = input.value.trim();
+                input.value = '';
+                if (jsCode && !executedCode.has(jsCode)) {
+                    executedCode.add(jsCode); // Add to the set of executed code
+                    logCommand(jsCode);
+                    try {
+                        const result = eval(jsCode); // Execute JavaScript code
+                        logOutput(result);
+                    } catch (e) {
+                        logOutput(e.message, true);
+                    }
+                } else if (executedCode.has(jsCode)) {
+                    logOutput('Code already executed.', true);
+                }
+            }
+        });
+
+        function logCommand(command) {
+            const commandDiv = document.createElement('div');
+            commandDiv.className = 'command';
+            commandDiv.textContent = '> ' + command;
+            consoleDiv.appendChild(commandDiv);
+            consoleDiv.scrollTop = consoleDiv.scrollHeight;
+        }
+
+        function logOutput(output, isError = false) {
+            const outputDiv = document.createElement('div');
+            outputDiv.className = isError ? 'error' : 'output';
+            outputDiv.textContent = output;
+            consoleDiv.appendChild(outputDiv);
+            consoleDiv.scrollTop = consoleDiv.scrollHeight;
+        }
+    </script>
+</body>
+</html>
