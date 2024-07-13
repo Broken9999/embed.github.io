@@ -24,19 +24,21 @@
             overflow-y: auto;
             transition: right 0.3s ease;
             z-index: 1000;
+            box-shadow: -2px 0 5px rgba(0,0,0,0.5);
         }
         #toggle-button {
             position: fixed;
             right: 0;
             top: 50%;
-            width: 20px;
-            height: 100px;
+            width: 30px;
+            height: 80px;
             background-color: #333333;
             color: #ffffff;
             border: none;
             cursor: pointer;
             z-index: 1001;
             transform: translateY(-50%);
+            border-radius: 5px 0 0 5px;
         }
         #console {
             padding: 10px;
@@ -44,6 +46,7 @@
             height: 200px;
             overflow-y: auto;
             margin-bottom: 10px;
+            border-radius: 5px;
         }
         .command { color: #00ff00; }
         .output { color: #ffffff; }
@@ -55,6 +58,7 @@
             background-color: #333333;
             color: #ffffff;
             border: none;
+            border-radius: 5px;
         }
         button {
             padding: 10px;
@@ -63,6 +67,11 @@
             border: none;
             cursor: pointer;
             margin: 10px;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #66ff66;
         }
         #output-container {
             flex-grow: 1;
@@ -70,12 +79,15 @@
             background-color: #fff;
             color: #000;
             position: relative;
+            border-radius: 5px;
+            margin: 10px;
         }
         iframe {
             width: 100%;
             height: 100vh;
             background-color: #fff;
             display: none;
+            border-radius: 5px;
         }
         #next-screen-button {
             position: fixed;
@@ -87,20 +99,19 @@
             border: none;
             cursor: pointer;
             z-index: 1002;
+            border-radius: 5px;
+            transition: background-color 0.3s;
         }
-        #elements {
+        #next-screen-button:hover {
+            background-color: #0056b3;
+        }
+        #elements, #links {
             padding: 10px;
             margin: 10px;
             background-color: #333333;
             height: 150px;
             overflow-y: auto;
-        }
-        #links {
-            padding: 10px;
-            margin: 10px;
-            background-color: #333333;
-            height: 150px;
-            overflow-y: auto;
+            border-radius: 5px;
         }
     </style>
 </head>
@@ -121,7 +132,7 @@
     </div>
     <div id="output-container">
         <div id="output"></div>
-        <iframe id="website-iframe" src="about:blank"></iframe>
+        <iframe id="website-iframe" src="about:blank" sandbox="allow-same-origin allow-scripts"></iframe>
     </div>
     <button id="next-screen-button">Go to Google Doc</button>
 
@@ -182,6 +193,7 @@
             newIframe.style.width = '100%';
             newIframe.style.height = '100%';
             newIframe.src = url;
+            newIframe.sandbox = 'allow-same-origin allow-scripts'; // Add sandbox
 
             newWindow.document.body.appendChild(newIframe);
             logOutput('Embedding website in new tab...');
