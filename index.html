@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
     <title>NewTab</title>
+    <link rel="icon" href="favicon.ico" type="image/x-icon">
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -94,6 +95,13 @@
             height: 150px;
             overflow-y: auto;
         }
+        #links {
+            padding: 10px;
+            margin: 10px;
+            background-color: #333333;
+            height: 150px;
+            overflow-y: auto;
+        }
     </style>
 </head>
 <body>
@@ -103,10 +111,13 @@
         <button id="fetch-website">Fetch Website</button>
         <button id="load-iframe">Load in Iframe</button>
         <button id="embed-website">Embed in New Tab</button>
+        <button id="save-link">Save Link</button>
         <div id="console"></div>
         <input type="text" id="input" placeholder="Enter JavaScript code here...">
         <h3>Elements</h3>
         <div id="elements"></div>
+        <h3>Saved Links</h3>
+        <div id="links"></div>
     </div>
     <div id="output-container">
         <div id="output"></div>
@@ -122,11 +133,13 @@
         const fetchWebsiteButton = document.getElementById('fetch-website');
         const loadIframeButton = document.getElementById('load-iframe');
         const embedButton = document.getElementById('embed-website');
+        const saveLinkButton = document.getElementById('save-link');
         const sidebar = document.getElementById('sidebar');
         const toggleButton = document.getElementById('toggle-button');
         const iframe = document.getElementById('website-iframe');
         const nextScreenButton = document.getElementById('next-screen-button');
         const elementsDiv = document.getElementById('elements');
+        const linksDiv = document.getElementById('links');
 
         let executedCode = new Set(); // Store executed JS code to prevent duplicates
 
@@ -155,6 +168,7 @@
             outputDiv.innerHTML = ''; // Clear output
             logOutput('Loading website in iframe...');
             elementsDiv.textContent = ''; // Clear elements section
+            linksDiv.innerHTML = ''; // Clear links section
         });
 
         embedButton.addEventListener('click', function() {
@@ -173,12 +187,48 @@
             logOutput('Embedding website in new tab...');
         });
 
-        nextScreenButton.addEventListener('click', function() {
+        saveLinkButton.addEventListener('click', function() {
+            const url = websiteInput.value;
+            if (url) {
+                let savedLinks = JSON.parse(localStorage.getItem('savedLinks')) || [];
+                if (!savedLinks.includes(url)) {
+                    savedLinks.push(url);
+                    localStorage.setItem('savedLinks', JSON.stringify(savedLinks));
+                    loadSavedLinks();
+                    logOutput(`Saved link: ${url}`);
+                } else {
+                    logOutput('Link already saved.', true);
+                }
+            } else {
+                logOutput('Please enter a URL to save.', true);
+            }
+        });
+
+        function loadSavedLinks() {
+            linksDiv.innerHTML = ''; // Clear previous links
+            let savedLinks = JSON.parse(localStorage.getItem('savedLinks')) || [];
+            savedLinks.forEach(link => {
+                const linkElement = document.createElement('div');
+                linkElement.textContent = link;
+                linkElement.style.cursor = 'pointer';
+                linkElement.onclick = () => {
+                    iframe.src = link; // Load selected link in iframe
+                    logOutput(`Loading ${link}...`);
+                };
+                linksDiv.appendChild(linkElement);
+            });
+        }
+
+        nextScreenButton.addEventListener('click', async function() {
             outputDiv.innerHTML = ''; // Clear output
-            iframe.src = "https://docs.google.com/document/d/17ac7vGx49IOY23yPEccJA7uxSk-byvI2OkpiPHxeMjs/edit"; // Embed Google Doc
+            const docUrl = "https://docs.google.com/document/d/17ac7vGx49IOY23yPEccJA7uxSk-byvI2OkpiPHxeMjs/edit"; // Embed Google Doc
+            iframe.src = docUrl; // Embed Google Doc
             iframe.style.display = 'block'; // Show the iframe
             logOutput('Loading Google Doc...');
             elementsDiv.textContent = ''; // Clear elements section
+
+            // Load saved links from local storage
+            loadSavedLinks();
         });
 
         input.addEventListener('keypress', function (e) {
@@ -192,10 +242,8 @@
                         const result = eval(jsCode); // Execute JavaScript code
                         logOutput(result);
                     } catch (e) {
-                        logOutput(e.message, true);
+                        logOutput(e, true);
                     }
-                } else if (executedCode.has(jsCode)) {
-                    logOutput('Code already executed.', true);
                 }
             }
         });
@@ -215,6 +263,9 @@
             consoleDiv.appendChild(outputDiv);
             consoleDiv.scrollTop = consoleDiv.scrollHeight;
         }
+
+        // Load saved links on page load
+        loadSavedLinks();
     </script>
 </body>
 </html>
