@@ -83,7 +83,7 @@
             border-radius: 5px;
             margin: 10px;
         }
-        iframe {
+        iframe, object, embed, canvas {
             width: 100%;
             height: 100%;
             background-color: #fff;
@@ -93,7 +93,7 @@
         #next-screen-button {
             position: fixed;
             bottom: 20px;
-            right: 20px;
+            left: 20px;
             padding: 10px;
             background-color: #007BFF;
             color: #fff;
@@ -124,6 +124,17 @@
         <button id="load-iframe">Load in Iframe</button>
         <button id="embed-website">Embed in New Tab</button>
         <button id="save-link">Save Link</button>
+
+        <!-- New buttons for various embedding methods -->
+        <button id="load-object">Load with Object</button>
+        <button id="load-embed">Load with Embed</button>
+        <button id="load-dynamic-iframe">Load with JavaScript</button>
+        <button id="load-canvas">Load Canvas</button>
+        <button id="load-frame">Load with Frame</button>
+        <button id="load-video">Load Video</button>
+        <button id="load-stylesheet">Load Stylesheet</button>
+        <button id="load-csp">Load CSP Meta</button>
+        
         <div id="console"></div>
         <input type="text" id="input" placeholder="Enter JavaScript code here...">
         <h3>Elements</h3>
@@ -134,6 +145,9 @@
     <div id="output-container">
         <div id="output"></div>
         <iframe id="website-iframe" src="about:blank" sandbox="allow-same-origin allow-scripts allow-top-navigation allow-forms allow-pointer-lock"></iframe>
+        <object id="website-object" data="" type="text/html" style="display:none;"></object>
+        <embed id="website-embed" src="" style="display:none;"></embed>
+        <canvas id="myCanvas" style="display:none;"></canvas>
     </div>
     <button id="next-screen-button">Go to Google Doc</button>
 
@@ -146,44 +160,55 @@
         const loadIframeButton = document.getElementById('load-iframe');
         const embedButton = document.getElementById('embed-website');
         const saveLinkButton = document.getElementById('save-link');
+        const loadObjectButton = document.getElementById('load-object');
+        const loadEmbedButton = document.getElementById('load-embed');
+        const loadDynamicIframeButton = document.getElementById('load-dynamic-iframe');
+        const loadCanvasButton = document.getElementById('load-canvas');
+        const loadFrameButton = document.getElementById('load-frame');
+        const loadVideoButton = document.getElementById('load-video');
+        const loadStylesheetButton = document.getElementById('load-stylesheet');
+        const loadCspButton = document.getElementById('load-csp');
         const sidebar = document.getElementById('sidebar');
         const toggleButton = document.getElementById('toggle-button');
         const iframe = document.getElementById('website-iframe');
+        const objectElement = document.getElementById('website-object');
+        const embedElement = document.getElementById('website-embed');
+        const canvas = document.getElementById('myCanvas');
         const nextScreenButton = document.getElementById('next-screen-button');
         const elementsDiv = document.getElementById('elements');
         const linksDiv = document.getElementById('links');
 
         let executedCode = new Set(); // Store executed JS code to prevent duplicates
 
-        toggleButton.addEventListener('click', function() {
+        toggleButton.addEventListener('click', () => {
             sidebar.style.right = sidebar.style.right === '0px' ? '-300px' : '0px';
         });
 
-        fetchWebsiteButton.addEventListener('click', async function() {
+        fetchWebsiteButton.addEventListener('click', async () => {
             const url = websiteInput.value;
             try {
                 const response = await fetch(url);
                 if (!response.ok) throw new Error('Network response was not ok');
                 const html = await response.text();
-                outputDiv.innerHTML = html; // Display fetched HTML
+                outputDiv.innerHTML = html;
                 logOutput('Fetched content successfully.');
-                elementsDiv.textContent = html; // Display HTML in Elements section
+                elementsDiv.textContent = html;
             } catch (error) {
                 logOutput(error.message, true);
             }
         });
 
-        loadIframeButton.addEventListener('click', function() {
+        loadIframeButton.addEventListener('click', () => {
             const url = websiteInput.value;
-            iframe.src = url; // Load the URL in the iframe
-            iframe.style.display = 'block'; // Show the iframe
-            outputDiv.innerHTML = ''; // Clear output
+            iframe.src = url;
+            iframe.style.display = 'block';
+            outputDiv.innerHTML = '';
             logOutput('Loading website in iframe...');
-            elementsDiv.textContent = ''; // Clear elements section
-            linksDiv.innerHTML = ''; // Clear links section
+            elementsDiv.textContent = '';
+            linksDiv.innerHTML = '';
         });
 
-        embedButton.addEventListener('click', function() {
+        embedButton.addEventListener('click', () => {
             const url = websiteInput.value;
             const newWindow = window.open();
             newWindow.document.body.style.margin = '0';
@@ -194,13 +219,81 @@
             newIframe.style.width = '100%';
             newIframe.style.height = '100%';
             newIframe.src = url;
-            newIframe.sandbox = 'allow-same-origin allow-scripts allow-top-navigation allow-forms allow-pointer-lock'; // Add sandbox
+            newIframe.sandbox = 'allow-same-origin allow-scripts allow-top-navigation allow-forms allow-pointer-lock';
 
             newWindow.document.body.appendChild(newIframe);
             logOutput('Embedding website in new tab...');
         });
 
-        saveLinkButton.addEventListener('click', function() {
+        loadObjectButton.addEventListener('click', () => {
+            const url = websiteInput.value;
+            objectElement.data = url;
+            objectElement.style.display = 'block';
+            hideOtherElements();
+            logOutput('Loading website with Object...');
+        });
+
+        loadEmbedButton.addEventListener('click', () => {
+            const url = websiteInput.value;
+            embedElement.src = url;
+            embedElement.style.display = 'block';
+            hideOtherElements();
+            logOutput('Loading website with Embed...');
+        });
+
+        loadDynamicIframeButton.addEventListener('click', () => {
+            const url = websiteInput.value;
+            const dynamicIframe = document.createElement('iframe');
+            dynamicIframe.src = url;
+            dynamicIframe.style.width = "100%";
+            dynamicIframe.style.height = "100%";
+            outputDiv.innerHTML = '';
+            outputDiv.appendChild(dynamicIframe);
+            logOutput('Loading website with JavaScript...');
+            hideOtherElements();
+        });
+
+        loadCanvasButton.addEventListener('click', () => {
+            canvas.style.display = 'block';
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = 'blue';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            logOutput('Loading Canvas...');
+            hideOtherElements();
+        });
+
+        loadFrameButton.addEventListener('click', () => {
+            const url = websiteInput.value;
+            const frameset = `<frameset cols="100%"><frame src="${url}" /></frameset>`;
+            outputDiv.innerHTML = frameset;
+            logOutput('Loading website with Frame (deprecated)...');
+            hideOtherElements();
+        });
+
+        loadVideoButton.addEventListener('click', () => {
+            const url = websiteInput.value;
+            const videoElement = `<video controls><source src="${url}" type="video/mp4"></video>`;
+            outputDiv.innerHTML = videoElement;
+            logOutput('Loading Video...');
+            hideOtherElements();
+        });
+
+        loadStylesheetButton.addEventListener('click', () => {
+            const url = websiteInput.value;
+            const stylesheetLink = `<link rel="stylesheet" href="${url}">`;
+            outputDiv.innerHTML = stylesheetLink;
+            logOutput('Loading Stylesheet...');
+            hideOtherElements();
+        });
+
+        loadCspButton.addEventListener('click', () => {
+            const cspMeta = `<meta http-equiv="Content-Security-Policy" content="frame-src ${websiteInput.value};">`;
+            outputDiv.innerHTML = cspMeta;
+            logOutput('Loading CSP Meta...');
+            hideOtherElements();
+        });
+
+        saveLinkButton.addEventListener('click', () => {
             const url = websiteInput.value;
             if (url) {
                 let savedLinks = JSON.parse(localStorage.getItem('savedLinks')) || [];
@@ -218,41 +311,39 @@
         });
 
         function loadSavedLinks() {
-            linksDiv.innerHTML = ''; // Clear previous links
+            linksDiv.innerHTML = '';
             let savedLinks = JSON.parse(localStorage.getItem('savedLinks')) || [];
             savedLinks.forEach(link => {
                 const linkElement = document.createElement('div');
                 linkElement.textContent = link;
                 linkElement.style.cursor = 'pointer';
                 linkElement.onclick = () => {
-                    iframe.src = link; // Load selected link in iframe
+                    iframe.src = link;
                     logOutput(`Loading ${link}...`);
                 };
                 linksDiv.appendChild(linkElement);
             });
         }
 
-        nextScreenButton.addEventListener('click', async function() {
-            outputDiv.innerHTML = ''; // Clear output
-            const docUrl = "https://docs.google.com/document/d/17ac7vGx49IOY23yPEccJA7uxSk-byvI2OkpiPHxeMjs/edit"; // Embed Google Doc
-            iframe.src = docUrl; // Embed Google Doc
-            iframe.style.display = 'block'; // Show the iframe
+        nextScreenButton.addEventListener('click', () => {
+            outputDiv.innerHTML = '';
+            const docUrl = "https://docs.google.com/document/d/17ac7vGx49IOY23yPEccJA7uxSk-byvI2OkpiPHxeMjs/edit";
+            iframe.src = docUrl;
+            iframe.style.display = 'block';
             logOutput('Loading Google Doc...');
-            elementsDiv.textContent = ''; // Clear elements section
-
-            // Load saved links from local storage
+            elementsDiv.textContent = '';
             loadSavedLinks();
         });
 
-        input.addEventListener('keypress', function (e) {
+        input.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
                 const jsCode = input.value.trim();
                 input.value = '';
                 if (jsCode && !executedCode.has(jsCode)) {
-                    executedCode.add(jsCode); // Add to the set of executed code
+                    executedCode.add(jsCode);
                     logCommand(jsCode);
                     try {
-                        const result = eval(jsCode); // Execute JavaScript code
+                        const result = eval(jsCode);
                         logOutput(result);
                     } catch (e) {
                         logOutput(e, true);
@@ -275,6 +366,13 @@
             outputDiv.textContent = output;
             consoleDiv.appendChild(outputDiv);
             consoleDiv.scrollTop = consoleDiv.scrollHeight;
+        }
+
+        function hideOtherElements() {
+            iframe.style.display = 'none';
+            objectElement.style.display = 'none';
+            embedElement.style.display = 'none';
+            canvas.style.display = 'none';
         }
 
         // Load saved links on page load
