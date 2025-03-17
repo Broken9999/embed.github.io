@@ -125,7 +125,6 @@
         <button id="embed-website">Embed in New Tab</button>
         <button id="save-link">Save Link</button>
 
-        <!-- New buttons for various embedding methods -->
         <button id="load-object">Load with Object</button>
         <button id="load-embed">Load with Embed</button>
         <button id="load-dynamic-iframe">Load with JavaScript</button>
@@ -178,8 +177,7 @@
         const elementsDiv = document.getElementById('elements');
         const linksDiv = document.getElementById('links');
 
-        let executedCode = new Set(); // Store executed JS code to prevent duplicates
-
+        let executedCode = new Set();
         toggleButton.addEventListener('click', () => {
             sidebar.style.right = sidebar.style.right === '0px' ? '-300px' : '0px';
         });
@@ -375,7 +373,6 @@
             canvas.style.display = 'none';
         }
 
-        // Load saved links on page load
         loadSavedLinks();
     </script>
 </body>
